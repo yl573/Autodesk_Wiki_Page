@@ -1,0 +1,106 @@
+
+
+h1 {
+	font-size: 300%;
+}
+
+h2 {
+	font-size: 180%;
+	margin:0px;
+}
+
+hr {
+	margin: 10px;
+    height: 1px;
+    background-color: #aaa; 
+}
+
+.container{
+    min-width: 1600px;
+}
+
+.body-div {
+  overflow-x: auto;
+}
+
+.jumbotron {
+	background-color:#d05a00; 
+	color:#FEFFF8;
+}
+
+.get-failures {
+	margin-left: 200px;
+}
+
+.show-hide {
+  margin:10px; 
+  width:100px; 
+  position:relative; 
+  left:500px;
+  position: relative; 
+  bottom: 0;
+}
+
+.test {
+	padding-left: 20px;
+}
+
+.badge {
+	font-size:70%;
+}
+
+.version {
+  font-size:180%;
+}
+
+.msg {
+	padding-left:20px; 
+	white-space:pre-wrap; 
+	word-wrap:break-word;
+}
+
+.big-margin {
+	margin-top:50px;
+	margin-bottom:50px;
+}
+
+.changelist {
+  font-size: 18px;
+}
+
+.search {
+	margin-left:40px;
+	position:fixed;
+	top:250px;
+	padding:30px;
+}
+
+.submit {
+	margin-top:10px;
+}
+
+.run-machine {
+  color:#50CEC6;
+  font-size: 25.2px;
+  padding: 0px;
+}
+
+.has-scroll {
+	height: 720px;
+	overflow: scroll;
+}
+
+::-webkit-scrollbar {
+    width: 15px;
+    height:15px;
+}
+ 
+::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3); 
+    border-radius: 10px;
+}
+ 
+::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5); 
+}

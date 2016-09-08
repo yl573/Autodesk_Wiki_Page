@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en" ng-app="testResultsApp">
+<head>
+	<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script src="node_modules/angular-click-outside/angular-click-outside.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="spinner.css">
+    <script src="client.js"></script>
+</head>
+
+<body>
+
+	<div class="container" id="bomba">
+		<header class="jumbotron" >
+			<h1>Test Results</h1>
+		</header>
+		<br>
+		<h1 id="pageHeading">Most Recent Test Results</h1>
+		<h4>Last update: <span id='updateTime'></span></h4>
+		<br>
+		<div class="row row-content" ng-controller="failuresController">
+			<div class="col-xs-9 ">
+				<div ng-if="show == 3">
+					<h2>Too far back</h2>
+					<h2>look into the future, don't dwell on the past!</h2>
+				</div>
+				<div ng-if="show == 4">
+					<h2>No failures!</h2>
+					<h2>Maybe you should consider buying the lottery today...</h2>
+				</div>
+				<div ng-if="show == 0 || show == 'IN_PROGRESS'">
+					<h2 ng-if="show == 0">No data for failures on this day, getting them will take a while</h2>
+					<h2 ng-if="show == 'IN_PROGRESS'">Server is busy testing some other failures, please wait a while</h2>
+					<br>
+					<div class="row">
+						<div class="col-xs-3 col-xs-offset-2">
+							<button type="button" class="btn btn-primary btn-lg get-failures" ng-click="POSTfailures()">Get Failures</button>
+						</div>
+					</div>
+				</div>
+				<div ng-if="show == 1">
+					<h2>Finding failures, this might take a few minutes...</h2>
+					<div class="sk-circle">
+						<div class="sk-circle1 sk-child"></div>
+						<div class="sk-circle2 sk-child"></div>
+						<div class="sk-circle3 sk-child"></div>
+						<div class="sk-circle4 sk-child"></div>
+						<div class="sk-circle5 sk-child"></div>
+						<div class="sk-circle6 sk-child"></div>
+						<div class="sk-circle7 sk-child"></div>
+						<div class="sk-circle8 sk-child"></div>
+						<div class="sk-circle9 sk-child"></div>
+						<div class="sk-circle10 sk-child"></div>
+						<div class="sk-circle11 sk-child"></div>
+						<div class="sk-circle12 sk-child"></div>
+					</div>						
+				</div>
+				<div ng-repeat="version in currentFailures.versions" ng-if="show == 2 || show == 5" ng-init="search">
+					<div ng-if="(results = (version.tests | filter:filterMatch() | filter:search)).length > 0">
+						<div class="panel panel-primary" >
+						    <div class="panel-heading">
+		                    	<h1>Version test: {{version.version}}
+	                    		<span class="badge">{{version.tests.length}} failures </span></h1>
+	                    		<h2 ng-if="!version.changeable">Last ran on
+	                    			<strong class="run-machine">{{version.lastRun}}</strong> at  
+	                    			<strong class="run-machine">{{version.machine}}</strong>
+	                    		</h2>
+	                    		<form class="form-inline version" ng-if="version.changeable" ng-init="lr=false; m=false">
+	                    			<span>Last run on </span>
+		                    		<span class="run-machine btn btn-lg" ng-click="lr=true" ng-show="!lr">
+										<strong>{{version.lastRun}}</strong>
+										<span class="glyphicon glyphicon-pencil"></span>
+									</span>
+									<span ng-show="lr" ng-init="lrModel=version.lastRun" tw-click-outside="lr=false">
+									    <input type="text" class="form-control" ng-model="lrModel">
+										<button type="submit" class="btn btn-default" ng-click="lr=false;updateVersion(version, 'lastRun', lrModel)">Update</button>
+									</span>
+									<span> at machine </span>
+									<span class="run-machine btn btn-lg" ng-click="m=true" ng-show="!m">
+										<strong>{{version.machine}}</strong>
+										<span class="glyphicon glyphicon-pencil"></span>
+									</span>
+									<span ng-show="m" ng-init="mModel=version.machine" tw-click-outside="m=false">
+									    <input type="text" class="form-control" ng-model="mModel">
+										<button type="submit" class="btn btn-default" ng-click="m=false;updateVersion(version, 'machine', mModel)">Update</button>
+									</span>
+								</form>
+							</div>
+			                <div class="panel-body">
+					           <div ng-init="scroll = false; showNum = 3" ng-class="{'has-scroll' : scroll}" class="body-div">		   
+				                    <div ng-repeat="test in results | limitTo: showNum" class="ng-class: getPanelClass(test.status);">
+				                    	<div class="panel-heading">
+				                    		<h2 class="test">Failed test:  <strong>{{test.test}}</strong></h2>				
+				                    	</div>    
+				                    	<div class="panel-body">  
+		    			                    <div class="alert alert-warning alert-dismissible" role="alert" ng-if="test.hasOwnProperty('firstFound')">
+												<button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+												<strong>Warning!</strong> Failure first occured on {{test.firstFound}}
+											</div>  
+				                    		<h4>
+				                    			{{toMsg(test.status)}}
+				                    			<div class="btn btn-lg pull-right" ng-click="test.show=!test.show">
+				                    			<span class="glyphicon glyphicon-comment"></span></div>
+				                    		</h4>
+			                    			<h4 ng-if="test.type == 'new'">Changelist: <strong>{{test.changelist}}</strong></h4>
+		                    				<form id="update-form" class="form-inline changelist" ng-if="test.type == 'old'" ng-init="showForm=false" >
+												<span>Changelist: <strong ng-show="showForm == false">{{test.changelist}}</strong></span>
+												<div class="btn btn-md"  ng-show="showForm == false" ng-click="showForm=true"><span class="glyphicon glyphicon-pencil"></span></div>
+												<span ng-show="showForm == true" ng-init="cl=test.changelist" tw-click-outside="showForm=false">
+												    <input type="text" class="form-control" ng-model="cl">
+													<button type="submit" class="btn btn-default" ng-click="showForm=false; updateChangelist(version, test, cl)">Update</button>
+												</span>
+											</form>
+				                    		<div ng-if="test.hasOwnProperty('username')">
+				                    			<h4>Developer: <strong>{{test.username}}</strong></h4>
+				                    			<h4>Email has been sent to <strong>{{test.email}}</strong></h4>
+				                    		</div>
+				                    		<div>
+				                    			<div ng-if="test.comments.length != 0">
+				                    				<br>
+				                    				<label>Comments</label>
+				                    				<div ng-repeat="comment in test.comments track by $index">
+				                    					<hr>	
+				                    					<div class="row">
+				                    						<div class="col-xs-6">
+				                    							<p class="msg">{{comment.comment}}</p>
+				                    						</div>
+				                    						<div class="col-xs-4">
+				                    							<p class="msg">{{comment.time.toDateString()}}</p>
+				                    						</div>
+				                    						<div class="col-xs-2">
+				                    							<span class="glyphicon glyphicon-trash btn pull-right" ng-click="message(version, test, msg, 'DELETE')"></span>
+				                    						</div>
+				                    					</div>	  	
+				                    				</div>
+				                    			</div>
+				                    	    	<form ng-if="test.show" ng-init="msg">
+						                	 		<br>
+													<label for="comment">Write a comment</label>
+												    <textarea rows="4" cols="50" id="comment" class="form-control" ng-model="msg" placeholder="Your comment"></textarea>
+												    <button type="submit" ng-click="message(version, test, msg, 'POST');msg=''" class="btn btn-primary btn-sm submit">Submit</button>
+												</form>  
+											</div>
+					                    </div>
+				                    </div>  
+				                </div>  
+				                <div class="btn btn-info btn-lg show-hide" ng-show="results.length > showNum" ng-click="scroll = true; showNum = results.length">Show all</div>
+								<div class="btn btn-info btn-lg show-hide" ng-show="scroll && results.length == showNum" ng-click="scroll = false; showNum = 3">Hide</div>	      
+			                </div>       
+			            </div>   
+			            <br>
+		            </div>
+	            </div>
+            </div>
+            <div class="col-xs-3">
+				<form class="form-horizontal search panel panel-default" ng-submit="sendDate(day)" ng-init="day">
+					<h3>Search for day:</h3>
+					<input type="date" id="dateInput" name="date" ng-model="day"><br><br>
+					<button type="submit" class="btn btn-default">Search day</button>
+
+					<hr class="big-margin">
+
+					<h3>Test Filter: </h3>
+					<input type="text" ng-model="search.test" placeholder="eg.  /FACET/"><br><br>
+					<div class="radio">
+						<label>
+							<input type="radio" name="filterRadios" ng-model="filter" value="all" checked>
+							All
+						</label>
+					</div>
+					<div class="radio">
+						<label>
+							<input type="radio" name="filterRadios" ng-model="filter" value="triaged">
+							Triaged
+						</label>
+					</div>
+					<div class="radio">
+						<label>
+							<input type="radio" name="filterRadios" ng-model="filter" value="cannot reproduce">
+							Cannot Reproduce
+						</label>
+					</div>
+					<div class="radio">
+						<label>
+							<input type="radio" name="filterRadios" ng-model="filter" value="new">
+							New
+						</label>
+					</div>
+					<div class="radio">
+						<label>
+							<input type="radio" name="filterRadios" ng-model="filter" value="repeating">
+							Repeating
+						</label>
+					</div>
+				</form>
+            </div>
+		</div>
+	</div>
+</body>
+</html>
